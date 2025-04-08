@@ -1,0 +1,121 @@
+{% extends "layout_simple.html" %}
+
+{% block title %}Available Exams | Online Examination System{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>
+        <i class="fas fa-file-alt me-2"></i>Available Exams
+    </h1>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                {% if exams %}
+                    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                        {% for exam in exams %}
+                            <div class="col">
+                                <div class="card h-100 dashboard-card">
+                                    <div class="card-header">
+                                        <h5 class="card-title mb-0">{{ exam.title }}</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="card-text">{{ exam.description }}</p>
+                                        
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span class="text-muted">
+                                                <i class="fas fa-calendar-alt me-1"></i>Date:
+                                            </span>
+                                            <span>{{ exam.scheduled_date.strftime("%d %b %Y") }}</span>
+                                        </div>
+                                        
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span class="text-muted">
+                                                <i class="fas fa-clock me-1"></i>Time:
+                                            </span>
+                                            <span>{{ exam.scheduled_date.strftime("%I:%M %p") }}</span>
+                                        </div>
+                                        
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span class="text-muted">
+                                                <i class="fas fa-hourglass-half me-1"></i>Duration:
+                                            </span>
+                                            <span>{{ exam.duration_minutes }} minutes</span>
+                                        </div>
+                                        
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span class="text-muted">
+                                                <i class="fas fa-question-circle me-1"></i>Status:
+                                            </span>
+                                            <span>
+                                                {% if exam.scheduled_date > now() %}
+                                                    <span class="badge bg-warning">Upcoming</span>
+                                                {% else %}
+                                                    <span class="badge bg-success">Available</span>
+                                                {% endif %}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="card-footer">
+                                        <a href="{{ url_for('start_exam', exam_id=exam.id) }}" class="btn btn-primary d-block">
+                                            <i class="fas fa-play me-1"></i>Start Exam
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>No exams are currently available for you.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <i class="fas fa-info-circle me-2"></i>Exam Instructions
+            </div>
+            <div class="card-body">
+                <h5 class="card-title">Important Guidelines for Online Exams</h5>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        Ensure you have a stable internet connection before starting the exam.
+                    </li>
+                    <li class="list-group-item">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        Once the exam starts, a timer will begin counting down. When time expires, the exam will be automatically submitted.
+                    </li>
+                    <li class="list-group-item">
+                        <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                        <strong>Tab Switching:</strong> The system actively monitors tab switching. Changing tabs or windows during the exam will be detected and recorded.
+                    </li>
+                    <li class="list-group-item">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        Your answers are periodically saved, but it's recommended to click the "Submit" button when you finish.
+                    </li>
+                    <li class="list-group-item">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        If you encounter any technical issues during the exam, contact your instructor immediately.
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Set current time variable for templates
+    const now = new Date();
+</script>
+{% endblock %}

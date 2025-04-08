@@ -1,0 +1,96 @@
+{% extends "layout.html" %}
+
+{% block title %}Review Webcam - {{ student.username }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h2>Webcam Review</h2>
+            <h4>Student: {{ student.username }}</h4>
+            <h5>Exam: {{ exam.title }}</h5>
+            <p>
+                <strong>Exam Date:</strong> {{ exam.scheduled_date.strftime('%Y-%m-%d %H:%M') }}<br>
+                <strong>Start Time:</strong> {{ user_exam.start_time.strftime('%Y-%m-%d %H:%M:%S') }}<br>
+                {% if user_exam.end_time %}
+                <strong>End Time:</strong> {{ user_exam.end_time.strftime('%Y-%m-%d %H:%M:%S') }}<br>
+                {% endif %}
+                <strong>Completed:</strong> {{ 'Yes' if user_exam.is_completed else 'No' }}<br>
+                <strong>Tab Switches:</strong> {{ user_exam.tab_switch_count or 0 }}<br>
+                <strong>Webcam Enabled:</strong> {{ 'Yes' if user_exam.webcam_enabled else 'No' }}<br>
+                <strong>Webcam Violations:</strong> {{ user_exam.webcam_violation_count or 0 }}
+            </p>
+        </div>
+    </div>
+    
+    {% if frames %}
+    <div class="row">
+        <div class="col">
+            <h3>Webcam Captures ({{ frames|length }} frames)</h3>
+            <p>Click on any thumbnail to view the full-size image.</p>
+        </div>
+    </div>
+    
+    <div class="row">
+        {% for frame in frames %}
+        <div class="col-md-3 mb-4">
+            <div class="card h-100">
+                <a href="#" data-bs-toggle="modal" data-bs-target="#frameModal{{ frame.id }}">
+                    <img src="{{ frame.frame_data }}" class="card-img-top" alt="Webcam frame">
+                </a>
+                <div class="card-body">
+                    <h6 class="card-title">Frame #{{ loop.index }}</h6>
+                    <p class="card-text">
+                        <small class="text-muted">
+                            {{ frame.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}
+                        </small>
+                        {% if frame.flagged %}
+                        <span class="badge bg-danger">Flagged</span>
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Modal for full-size image -->
+        <div class="modal fade" id="frameModal{{ frame.id }}" tabindex="-1" aria-labelledby="frameModalLabel{{ frame.id }}" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="frameModalLabel{{ frame.id }}">
+                            Frame #{{ loop.index }} - {{ frame.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body text-center">
+                        <img src="{{ frame.frame_data }}" class="img-fluid" alt="Webcam frame">
+                        {% if frame.flagged %}
+                        <div class="alert alert-danger mt-3">
+                            <strong>Flag Reason:</strong> {{ frame.flag_reason }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="row">
+        <div class="col">
+            <div class="alert alert-info">
+                No webcam frames were captured for this exam session.
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <div class="row mt-4">
+        <div class="col">
+            <a href="{{ url_for('review_answers', exam_id=exam.id) }}" class="btn btn-primary">
+                <i class="bi bi-arrow-left"></i> Back to Exam Answers
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,244 @@
+{% extends "layout_simple.html" %}
+
+{% block title %}{{ exam.title }} | Online Examination System{% endblock %}
+
+{% block head %}
+<!-- Meta tag to prevent caching -->
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<!-- CSRF token for JavaScript fetch requests -->
+<meta name="csrf-token" content="{{ csrf_token() }}">
+{% endblock %}
+
+{% block content %}
+<!-- Webcam Consent Modal -->
+<div class="modal fade" id="webcam-consent-modal" tabindex="-1" aria-labelledby="webcamModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="webcamModalLabel">Webcam Access Permission</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>This exam uses webcam monitoring for proctoring purposes. Your webcam feed will be periodically captured to ensure exam integrity.</p>
+                <p>You need to grant permission for webcam access to continue with the exam.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Decline</button>
+                <button type="button" class="btn btn-primary" id="webcam-consent-agree">I Agree</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="exam-header shadow-sm mb-4">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <h2>{{ exam.title }}</h2>
+            </div>
+            <div class="col-md-6">
+                <div id="exam-timer" class="exam-timer" data-duration="{{ exam.duration_minutes }}">
+                    <span class="text-success">Time Remaining: Loading...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-8">
+            <form method="POST" id="exam-form" action="{{ url_for('start_exam', exam_id=exam.id) }}">
+                {{ form.hidden_tag() if form else '' }}
+                
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div id="autosave-indicator" class="alert alert-success" style="display: none;">Answers saved</div>
+                
+                {% for question in questions %}
+                    <div class="question-container card mb-4" id="question_{{ question.id }}" data-question-id="{{ loop.index }}">
+                        <div class="card-body">
+                            <h4 class="mb-3">Question {{ loop.index }} <small class="text-muted">({{ question.points }} points)</small></h4>
+                            <p class="mb-4">{{ question.question_text }}</p>
+                            
+                            {% if question.question_type == 'mcq' %}
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="radio" name="question_{{ question.id }}" id="question_{{ question.id }}_a" value="A">
+                                    <label class="form-check-label" for="question_{{ question.id }}_a">
+                                        A) {{ question.option_a }}
+                                    </label>
+                                </div>
+                                
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="radio" name="question_{{ question.id }}" id="question_{{ question.id }}_b" value="B">
+                                    <label class="form-check-label" for="question_{{ question.id }}_b">
+                                        B) {{ question.option_b }}
+                                    </label>
+                                </div>
+                                
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="radio" name="question_{{ question.id }}" id="question_{{ question.id }}_c" value="C">
+                                    <label class="form-check-label" for="question_{{ question.id }}_c">
+                                        C) {{ question.option_c }}
+                                    </label>
+                                </div>
+                                
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="radio" name="question_{{ question.id }}" id="question_{{ question.id }}_d" value="D">
+                                    <label class="form-check-label" for="question_{{ question.id }}_d">
+                                        D) {{ question.option_d }}
+                                    </label>
+                                </div>
+                            {% elif question.question_type == 'true_false' %}
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="radio" name="question_{{ question.id }}" id="question_{{ question.id }}_true" value="True">
+                                    <label class="form-check-label" for="question_{{ question.id }}_true">True</label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="radio" name="question_{{ question.id }}" id="question_{{ question.id }}_false" value="False">
+                                    <label class="form-check-label" for="question_{{ question.id }}_false">False</label>
+                                </div>
+                            {% elif question.question_type == 'short_answer' or question.question_type == 'essay' %}
+                                <div class="form-group">
+                                    <textarea class="form-control" name="question_{{ question.id }}" rows="{% if question.question_type == 'essay' %}6{% else %}2{% endif %}"></textarea>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+                
+                <div class="d-grid gap-2 mt-4 mb-5">
+                    <button type="submit" class="btn btn-success btn-lg">
+                        <i class="bi bi-check-circle me-2"></i>Submit Exam
+                    </button>
+                </div>
+            </form>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card sticky-top" style="top: 20px;">
+                <div class="card-header bg-primary text-white">
+                    <i class="bi bi-list-ol me-2"></i>Question Navigation
+                </div>
+                <div class="card-body">
+                    <div id="question-nav" class="question-nav"></div>
+                    
+                    <hr>
+                    
+                    <div class="d-flex justify-content-between">
+                        <button id="prev-question" class="btn btn-outline-primary">
+                            <i class="bi bi-arrow-left me-1"></i>Previous
+                        </button>
+                        <button id="next-question" class="btn btn-outline-primary">
+                            Next<i class="bi bi-arrow-right ms-1"></i>
+                        </button>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="legend">
+                        <p class="mb-1"><small>Legend:</small></p>
+                        <div class="d-flex flex-wrap gap-2">
+                            <span class="badge bg-primary">Current</span>
+                            <span class="badge bg-success">Answered</span>
+                            <span class="badge bg-secondary">Not visited</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mt-4">
+                <div class="card-header bg-info text-white">
+                    <i class="bi bi-camera-video me-2"></i>Webcam Monitor
+                </div>
+                <div class="card-body">
+                    <div id="webcam-container" class="text-center">
+                        <video id="webcam" class="img-fluid mb-2" autoplay playsinline style="display:none;"></video>
+                        <p id="webcam-status" class="mb-0 text-muted">Webcam not enabled</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Include the proctor script -->
+<script src="{{ url_for('static', filename='js/proctor.js') }}"></script>
+<script src="{{ url_for('static', filename='js/exam.js') }}"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Show webcam consent modal
+        const webcamConsentModal = new bootstrap.Modal(document.getElementById("webcam-consent-modal"));
+        webcamConsentModal.show();
+
+        // Handle consent button click
+        document.getElementById("webcam-consent-agree").addEventListener("click", function() {
+            // Record consent
+            fetch(`/exam/${{{ exam.id }}}/webcam-consent`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": getCSRFToken()
+                },
+                body: JSON.stringify({ consent: true })
+            });
+            
+            webcamConsentModal.hide();
+        });
+        
+        // Initialize proctoring
+        initProctoring({{ exam.id }});
+        
+        // Initialize timer
+        initExamTimer({{ exam.duration_minutes }});
+        
+        // Initialize question navigation
+        setupQuestionNavigation();
+        
+        // Handle next/previous buttons
+        const nextButton = document.getElementById('next-question');
+        const prevButton = document.getElementById('prev-question');
+        
+        let currentQuestion = 1;
+        const totalQuestions = {{ questions|length }};
+        
+        nextButton.addEventListener('click', function() {
+            if (currentQuestion < totalQuestions) {
+                currentQuestion++;
+                const nextQuestionBtn = document.querySelector(`.question-nav-btn[data-question="${currentQuestion}"]`);
+                if (nextQuestionBtn) {
+                    nextQuestionBtn.click();
+                }
+            }
+        });
+        
+        prevButton.addEventListener('click', function() {
+            if (currentQuestion > 1) {
+                currentQuestion--;
+                const prevQuestionBtn = document.querySelector(`.question-nav-btn[data-question="${currentQuestion}"]`);
+                if (prevQuestionBtn) {
+                    prevQuestionBtn.click();
+                }
+            }
+        });
+        
+        // Update when question nav buttons are clicked
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('question-nav-btn')) {
+                currentQuestion = parseInt(e.target.getAttribute('data-question'));
+            }
+        });
+
+        // Setup autosave functionality
+        setupAutosave();
+    });
+
+    function getCSRFToken() {
+        return document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    }
+</script>
+{% endblock %}
