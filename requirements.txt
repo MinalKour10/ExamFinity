@@ -1,0 +1,6 @@
+flask
+gunicorn
+flask-sqlalchemy
+flask-wtf
+flask-login
+email-validator
