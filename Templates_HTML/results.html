@@ -1,0 +1,129 @@
+{% extends "layout_simple.html" %}
+
+{% block title %}My Results | Online Examination System{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>
+        <i class="fas fa-chart-bar me-2"></i>My Results
+    </h1>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <i class="fas fa-file-alt me-2"></i>Exam Results
+            </div>
+            <div class="card-body">
+                {% if exams %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Exam Title</th>
+                                    <th>Date Taken</th>
+                                    <th>Duration</th>
+                                    <th>Score</th>
+                                    <th>Tab Switches</th>
+                                    <th>Details</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for exam in exams %}
+                                    {% set user_exam = current_user.user_exams|selectattr('exam_id', 'eq', exam.id)|first %}
+                                    <tr>
+                                        <td>{{ exam.title }}</td>
+                                        <td>
+                                            {% if user_exam and user_exam.end_time %}
+                                                {{ user_exam.end_time.strftime('%d %b %Y, %I:%M %p') }}
+                                            {% else %}
+                                                N/A
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if user_exam and user_exam.start_time and user_exam.end_time %}
+                                                {% set duration = (user_exam.end_time - user_exam.start_time).total_seconds() // 60 %}
+                                                {{ duration }} mins
+                                            {% else %}
+                                                N/A
+                                            {% endif %}
+                                        </td>
+                                        <td>-- %</td>
+                                        <td>
+                                            {% if user_exam and user_exam.tab_switch_count %}
+                                                <span class="badge bg-warning">{{ user_exam.tab_switch_count }}</span>
+                                            {% else %}
+                                                <span class="badge bg-success">0</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <a href="#" class="btn btn-sm btn-info">
+                                                <i class="fas fa-eye me-1"></i>View Details
+                                            </a>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>You haven't taken any exams yet.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <i class="fas fa-chart-pie me-2"></i>Performance Overview
+            </div>
+            <div class="card-body">
+                <p class="text-center">Performance analysis will be displayed here</p>
+                <div class="text-center text-muted">
+                    <i class="fas fa-chart-pie fa-5x my-4"></i>
+                    <p>Take more exams to see your performance overview</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <i class="fas fa-lightbulb me-2"></i>Improvement Tips
+            </div>
+            <div class="card-body">
+                <h5 class="card-title">How to Improve Your Exam Performance</h5>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        Review past exam questions and understand the correct answers.
+                    </li>
+                    <li class="list-group-item">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        Create a study schedule and stick to it.
+                    </li>
+                    <li class="list-group-item">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        Practice time management during exams.
+                    </li>
+                    <li class="list-group-item">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        Avoid tab switching during exams as it may result in penalties.
+                    </li>
+                    <li class="list-group-item">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        Reach out to your instructors for additional help on challenging topics.
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
