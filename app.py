@@ -1,4 +1,4 @@
-from flask import Flask
+=from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_wtf.csrf import CSRFProtect
@@ -8,34 +8,36 @@ import os
 app = Flask(__name__, template_folder='Templates_HTML', static_folder='Static_files')
 app.secret_key = os.environ.get("SESSION_SECRET", "devkey")
 
-# Set database URI (either from environment or default to SQLite)
+# Configuration for database
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL", "sqlite:///instance/exams.db")
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# Initialize the database and CSRF protection
+# Initialize extensions
 db = SQLAlchemy(app)
 csrf = CSRFProtect(app)
 
-# Initialize the login manager
+# Setup login manager
 login_manager = LoginManager()
 login_manager.init_app(app)
-login_manager.login_view = "login"  # This will redirect to login if needed
+login_manager.login_view = "login"
 
-# User loader for flask-login
+# Initialize the user loader function
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-# Middleware for handling proxy headers (if using a reverse proxy)
+# Fix for Heroku or reverse proxies
 app.wsgi_app = ProxyFix(app.wsgi_app)
 
-# Register routes
+# Initialize app before first request (alternative to `before_first_request` for Flask 2.x)
+@app.before_first_request
+def initialize_app():
+    # Place any initialization code you need here
+    pass
+
+# Register routes after initialization
+from Python_Files.models import *
 import Python_Files.routes
 
-# Create all tables before the first request (if they don't exist)
-@app.before_first_request
-def create_tables():
-    db.create_all()
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.run(debug=True)
