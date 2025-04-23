@@ -1,40 +1,10 @@
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
+from datetime import datetime
 
 db = SQLAlchemy()
 
-class User(db.Model, UserMixin):
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(80), unique=True, nullable=False)
-    email = db.Column(db.String(120), unique=True, nullable=False)
-    password = db.Column(db.String(200), nullable=False)
-    role = db.Column(db.String(10), nullable=False)  # 'student' or 'admin'
-
-class Exam(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(100))
-    start_time = db.Column(db.DateTime)
-    end_time = db.Column(db.DateTime)
-
-class Question(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    exam_id = db.Column(db.Integer, db.ForeignKey('exam.id'))
-    text = db.Column(db.Text)
-    option_a = db.Column(db.String(100))
-    option_b = db.Column(db.String(100))
-    option_c = db.Column(db.String(100))
-    option_d = db.Column(db.String(100))
-    correct_option = db.Column(db.String(1))
-
-class Submission(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    exam_id = db.Column(db.Integer, db.ForeignKey('exam.id'))
-    answers = db.Column(db.Text)  # JSON or comma-separated string
-from datetime import datetime
-from app import db
-from flask_login import UserMixin
-
+# Role Model (for user roles such as admin, student)
 class Role(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(20), unique=True, nullable=False)
@@ -43,6 +13,7 @@ class Role(db.Model):
     def __repr__(self):
         return f"Role('{self.name}')"
 
+# User Model
 class User(UserMixin, db.Model):
     __tablename__ = 'users'  # Explicitly set table name to avoid conflict with PostgreSQL 'user' table
     
@@ -56,13 +27,13 @@ class User(UserMixin, db.Model):
     
     # Relationships
     answers = db.relationship('Answer', backref='user', lazy=True)
-    question_banks = db.relationship('QuestionBank', backref='creator', lazy=True, 
-                                    foreign_keys='QuestionBank.created_by')
+    question_banks = db.relationship('QuestionBank', backref='creator', lazy=True, foreign_keys='QuestionBank.created_by')
     user_exams = db.relationship('UserExam', backref='user', lazy=True)
 
     def __repr__(self):
         return f"User('{self.username}', '{self.email}', '{self.role.name}')"
 
+# QuestionBank Model
 class QuestionBank(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(100), nullable=False)
@@ -77,6 +48,7 @@ class QuestionBank(db.Model):
     def __repr__(self):
         return f"QuestionBank('{self.title}')"
 
+# Question Model
 class Question(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     question_text = db.Column(db.Text, nullable=False)
@@ -97,6 +69,7 @@ class Question(db.Model):
     def __repr__(self):
         return f"Question('{self.question_text[:30]}...', Type: {self.question_type})"
 
+# Exam Model
 class Exam(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(100), nullable=False)
@@ -113,6 +86,7 @@ class Exam(db.Model):
     def __repr__(self):
         return f"Exam('{self.title}', '{self.scheduled_date}')"
 
+# UserExam Model (tracks which user is attempting which exam)
 class UserExam(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
@@ -135,6 +109,7 @@ class UserExam(db.Model):
     def __repr__(self):
         return f"UserExam(User: {self.user_id}, Exam: {self.exam_id}, Completed: {self.is_completed})"
 
+# Answer Model (tracks user answers to questions in an exam)
 class Answer(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
@@ -150,6 +125,7 @@ class Answer(db.Model):
     def __repr__(self):
         return f"Answer(User: {self.user_id}, Question: {self.question_id})"
 
+# WebcamFrame Model (stores webcam images during an exam)
 class WebcamFrame(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
