@@ -34,6 +34,8 @@ body {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+    background-color: var(--bs-body-bg);
+    color: var(--bs-body-color);
 }
 
 .main-content {
@@ -132,15 +134,15 @@ body {
 }
 
 .answer-correct {
-    color: var(--bs-success);
+    color: var(--bs-success) !important;
 }
 
 .answer-incorrect {
-    color: var(--bs-danger);
+    color: var(--bs-danger) !important;
 }
 
 .tab-switch-warning {
-    color: var(--bs-warning);
+    color: var(--bs-warning) !important;
     font-weight: bold;
 }
 
@@ -168,4 +170,33 @@ body {
         padding: 5px 10px;
         font-size: 14px;
     }
+}
+
+/* Additional custom styles for accessibility and layout tweaks */
+.accordion-button {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.accordion-button:focus {
+    box-shadow: none !important;
+}
+
+.accordion-button.collapsed {
+    background-color: #f8f9fa !important;
+}
+
+.accordion-button:not(.collapsed) {
+    background-color: #f1f1f1 !important;
+}
+
+.accordion-body {
+    background-color: #f9f9f9;
+    padding: 15px;
+}
+
+.answer-correct, .answer-incorrect {
+    font-weight: bold;
 }
