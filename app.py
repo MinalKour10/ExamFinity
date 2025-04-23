@@ -5,7 +5,7 @@ from flask_wtf.csrf import CSRFProtect
 from werkzeug.middleware.proxy_fix import ProxyFix
 import os
 
-app = Flask(__name__, template_folder='Templates_HTML')
+app = Flask(__name__, template_folder='Templates_HTML', static_folder='Static_files')
 app.secret_key = os.environ.get("SESSION_SECRET", "devkey")
 
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL", "sqlite:///instance/exams.db")
