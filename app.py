@@ -41,3 +41,11 @@ import Python_Files.routes
 
 if __name__ == "__main__":
     app.run(debug=True)
+import os
+
+# Ensure the 'instance' directory exists
+os.makedirs(os.path.join(app.root_path, 'instance'), exist_ok=True)
+
+@app.before_first_request
+def create_tables():
+    db.create_all()
